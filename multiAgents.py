@@ -90,11 +90,14 @@ class ReflexAgent(Agent):
                 new_dist = manhattanDistance(newPos, food)
                 min_food_dist = min(min_food_dist, new_dist)
         
-        
-        weightedghostdist = (1/ (min_ghost_dist + 0.6)) ** 2
-        weightedfooddist = 1/ (min_food_dist  + 0.5)
-        currscore = currentGameState.getScore()
-        score = currscore + weightedghostdist + weightedfooddist
+        weightedghostdist = 1/ (min_ghost_dist + 0.3) 
+        weightedfooddist = 1/ (min_food_dist + 0.5) 
+        currscore = successorGameState.getScore() ** 2
+        score = weightedghostdist + weightedfooddist + currscore
+        if min_ghost_dist > 0:
+            score -= 10/min_ghost_dist
+        if len(foodlist):
+            score += 10/min_food_dist
         return score
 
 def scoreEvaluationFunction(currentGameState: GameState):
