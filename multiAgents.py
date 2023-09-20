@@ -332,32 +332,40 @@ def betterEvaluationFunction(currentGameState: GameState):
     newScaredTimes = [ghostState.scaredTimer for ghostState in ghostStates]
     "*** YOUR CODE HERE ***"
     min_ghost_dist = float("inf")
+    max_ghost_dist = float("-inf")
+    dist_from_ghosts = []
     for state in ghostStates:
-        if state.scaredTimer == 0:
-            g_x, g_y = state.getPosition()
-            new_dist = manhattanDistance(pos, (g_x, g_y))
-            min_ghost_dist = min(new_dist, min_ghost_dist)
+        g_x, g_y = state.getPosition()
+        new_dist = manhattanDistance(pos, (g_x, g_y))
+        dist_from_ghosts.append(new_dist)    
+    scared = sum([10 / (d + 0.1) for d in dist_from_ghosts])
+    notScared = sum([20 / ((d + 0.1) ** 5) for d in dist_from_ghosts])
+    ghost_dist = min(dist_from_ghosts) 
     
     foodlist = foods.asList()
+    food_list = []
     min_food_dist = float("inf")
+    foodAdd = 0
     if not foodlist:
-        min_food_dist = 0
+        food_list = 0
     else:
         for food in foodlist:
             new_dist = manhattanDistance(pos, food)
+            food_list.append(new_dist)
             min_food_dist = min(min_food_dist, new_dist)
-    
-    weightedghostdist = 1 / (min_ghost_dist ** 4 + 0.5) 
-    weightedfooddist = 1/ (min_food_dist ** 2 + 0.5) 
+        foodAdd = sum(1/(f ** 2 + 0.1) for f in food_list) ** 2
+        
+    weightedghostdist = 1 / (ghost_dist ** 2 + 0.5) 
+    weightedfooddist = 1 / (min_food_dist ** 4 + 0.5) 
     pacman = currentGameState.getPacmanState()
     currscore = currentGameState.getScore() ** 2
-    score = weightedghostdist + weightedfooddist + currscore
+    score = weightedghostdist + weightedfooddist + currscore - notScared + scared + foodAdd
     if min_ghost_dist > 0:
-        score -= 5 / min_ghost_dist
+        score -= 5 / (ghost_dist + 0.1)
     if len(foodlist):
-        score += 5 / min_food_dist
+        score += 5 / (min_food_dist + 0.1)
     if pacman.getDirection() == Directions.STOP:
-        score -= score ** 100
+        score -= 1 / (score ** 10)
     return score
 
 # Abbreviation
