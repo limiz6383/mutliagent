@@ -219,37 +219,40 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         actions = gameState.getLegalActions(0)
         alpha = float("-inf")
         beta = float("inf")
-        scoretoindex =[]
         idx = 0 
+        maxidx = 0 
         maxscore = float("-inf")
         for action in actions:
             newstate = gameState.generateSuccessor(0, action)
-            scoretoindex.append((self.minValue(newstate, alpha, beta, 1, 0), idx)) 
+            newscore = self.value(newstate, alpha, beta, 1, 0)
+            if newscore > maxscore:
+                maxscore= newscore
+                maxidx = idx
+            alpha = max(alpha, newscore)
             idx += 1
-        for pair in scoretoindex:
-            if pair[0] > maxscore:
-                maxscore= pair[0]
-                idx = pair[1]
-                alpha = max(alpha, pair[0])
-        return actions[idx]
-
-    def maxValue(self, state, alpha, beta, depth):
+            
+        return actions[maxidx]
+    
+    def value(self, state, alpha, beta, agent, depth):
         if self.depth == depth or state.isWin() or state.isLose():
             return self.evaluationFunction(state)
+        if agent == 0: 
+            return self.maxValue(state, alpha, beta, agent, depth)
+        if agent > 0:
+            return self.minValue(state, alpha, beta, agent, depth)
+
+    def maxValue(self, state, alpha, beta, agent, depth):
         v = float("-inf")
-        actions = state.getLegalActions(0)
+        actions = state.getLegalActions(agent)
         for action in actions:
-            s = state.generateSuccessor(0, action)
-            newval = self.minValue(s, alpha, beta, 1, depth)
-            v = max(newval, v)
+            s = state.generateSuccessor(agent, action)
+            v = max(v, self.value(s, alpha, beta, agent + 1, depth))
             if v > beta:
                 return v
             alpha = max(alpha, v)
         return v
     
     def minValue(self, state, alpha, beta, agent, depth):
-        if self.depth == depth or state.isWin() or state.isLose():
-            return self.evaluationFunction(state)
         v = float("inf")
         actions = state.getLegalActions(agent)
         for action in actions:
@@ -257,9 +260,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             numGhosts = state.getNumAgents() - 1
 
             if numGhosts == agent:
-                v = min(self.maxValue(s, alpha, beta, depth + 1), v)
+                v = min(self.value(s, alpha, beta, 0, depth + 1), v)
             else:
-                v = min(v, self.minValue(s, alpha, beta, agent + 1, depth))
+                v = min(v, self.value(s, alpha, beta, agent + 1, depth))
             if v < alpha:
                 return v
             beta = min(beta, v)
