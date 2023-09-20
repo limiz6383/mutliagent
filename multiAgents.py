@@ -189,8 +189,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return v
     
     def minValue(self, state: GameState, agent, depth):
-        if self.depth == depth or state.isWin() or state.isLose():
-            return self.evaluationFunction(state)
         v = float("inf")
         actions = state.getLegalActions(agent)
         successorState = []
@@ -282,7 +280,57 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = gameState.getLegalActions(0)
+        successorState = []
+        for action in actions:
+            successorState.append(gameState.generateSuccessor(0, action))
+        scoretoindex =[]
+        idx = 0 
+        for s in successorState:
+            scoretoindex.append((self.value(s, 1, 0), idx))
+            idx += 1
+        maxscore = float("-inf")
+        maxidx = 0 
+        for pair in scoretoindex:
+            if pair[0] > maxscore:
+                maxscore= pair[0]
+                maxidx = pair[1]
+        return actions[maxidx]
+    
+    def value(self, state, agent, depth):
+        if self.depth == depth or state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+        if agent == 0:
+            return self.maxValue(state, agent, depth)
+        if agent > 0:
+            return self.expValue(state, agent, depth)
+
+    def maxValue(self, state: GameState, agent, depth):
+        v = float("-inf")
+        actions = state.getLegalActions(0)
+        successorState = []
+        for action in actions:
+            successorState.append(state.generateSuccessor(0, action))
+        for s in successorState:
+            v = max(self.value(s, 1, depth), v)
+        return v
+    
+    def expValue(self, state: GameState, agent, depth):
+        v = 0
+        actions = state.getLegalActions(agent)
+        successorState = []
+        for action in actions:
+            successorState.append(state.generateSuccessor(agent, action))
+        numGhosts = state.getNumAgents() - 1
+
+        if numGhosts == agent:
+            for s in successorState:
+                v += self.value(s, 0, depth + 1)
+        else:
+            for s in successorState:
+                v += self.value(s, agent + 1, depth)
+        return v
+
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
